@@ -69,12 +69,20 @@ class UsersController extends Controller
      */
     public function show(User $user)
     {
-        $presents = Present::whereUserId($user->id)->whereMonth('tanggal',date('m'))->whereYear('tanggal',date('Y'))->orderBy('tanggal','desc')->paginate(5);
-        $masuk = Present::whereUserId($user->id)->whereMonth('tanggal',date('m'))->whereYear('tanggal',date('Y'))->whereKeterangan('masuk')->count();
-        $telat = Present::whereUserId($user->id)->whereMonth('tanggal',date('m'))->whereYear('tanggal',date('Y'))->whereKeterangan('telat')->count();
-        $cuti = Present::whereUserId($user->id)->whereMonth('tanggal',date('m'))->whereYear('tanggal',date('Y'))->whereKeterangan('cuti')->count();
-        $alpha = Present::whereUserId($user->id)->whereMonth('tanggal',date('m'))->whereYear('tanggal',date('Y'))->whereKeterangan('alpha')->count();
-        $kehadiran = Present::whereUserId($user->id)->whereMonth('tanggal',date('m'))->whereYear('tanggal',date('Y'))->whereKeterangan('telat')->get();
+        $baseQuery = Present::where('user_id', $user->id)
+            ->whereMonth('tanggal', date('m'))
+            ->whereYear('tanggal', date('Y'));
+        
+        $presents = (clone $baseQuery)
+            ->orderBy('tanggal', 'desc')
+            ->paginate(5);
+        
+        $masuk = (clone $baseQuery)->where('keterangan', 'masuk')->count();
+        $telat = (clone $baseQuery)->where('keterangan', 'telat')->count();
+        $cuti  = (clone $baseQuery)->where('keterangan', 'cuti')->count();
+        $alpha = (clone $baseQuery)->where('keterangan', 'alpha')->count();
+        
+        $kehadiran = (clone $baseQuery)->get();
         $totalJamTelat = 0;
         foreach ($kehadiran as $present) {
             $totalJamTelat = $totalJamTelat + (\Carbon\Carbon::parse($present->jam_masuk)->diffInHours(\Carbon\Carbon::parse(config('absensi.jam_masuk'))));
